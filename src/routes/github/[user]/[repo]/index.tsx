@@ -35,24 +35,29 @@ export const useFavorite = routeLoader$(async (requestEv) => {
       email: string;
       image: string;
     };
-  };
+  } | null;
   const supabaseClient = createServerClient(
     requestEv.env.get("PUBLIC_SUPABASE_URL")!,
     requestEv.env.get("PUBLIC_SUPABASE_ANON_KEY")!,
     requestEv
   );
 
-  const { data, error } = await supabaseClient
-    .from("favorite")
-    .select("*")
-    .eq("user", requestEv.params.user)
-    .eq("repo", requestEv.params.repo)
-    .eq("email", session.user.email);
+  const user = session?.user.email;
+  if (user) {
+    const { data, error } = await supabaseClient
+      .from("favorite")
+      .select("*")
+      .eq("user", requestEv.params.user)
+      .eq("repo", requestEv.params.repo)
+      .eq("email", user);
 
-  if (error) {
-    throw error;
+    if (error) {
+      throw error;
+    } else {
+      return data.length > 0;
+    }
   } else {
-    return data.length > 0;
+    return false;
   }
 });
 
